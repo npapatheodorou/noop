@@ -52,8 +52,18 @@ extension AppModel {
     static func startStrapSyncFromShortcut(waitSeconds: Int = 8) async -> StrapSyncShortcutOutcome {
         // The Dynamic Island readout goes up first, from here, because only a LiveActivityIntent may start
         // one from the background; the controller carries it through the sync from there.
-        if let model = shared { SyncLiveActivityController.shared.startFromShortcut(live: model.live) }
+        var islandStarted = false
+        if let model = shared {
+            SyncLiveActivityController.shared.startFromShortcut(live: model.live)
+            islandStarted = true
+        }
         for _ in 0..<waitSeconds {
+            // A cold launch can hand the intent its first tick before the model exists; start the island
+            // on the first tick that has one rather than never.
+            if !islandStarted, let model = shared {
+                SyncLiveActivityController.shared.startFromShortcut(live: model.live)
+                islandStarted = true
+            }
             if let model = shared, model.live.historyReady { break }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
