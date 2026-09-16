@@ -83,6 +83,8 @@ struct StrandiOSApp: App {
         NotificationPresenter.shared.onCoachBriefTapped = { [weak router] in router?.openCoach() }
         let model = AppModel()
         _model = StateObject(wrappedValue: model)
+        // Settings → "Keep screen on while syncing". Wired once here, not as another modifier on `body`.
+        SyncKeepAwake.shared.attach(to: model.live)
         // The buzz and the strap-gesture claim are injected, so the controller itself knows nothing
         // about BLE and stays testable.
         _liftSession = StateObject(wrappedValue: LiftSessionController(

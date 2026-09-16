@@ -241,6 +241,10 @@ struct SettingsView: View {
     /// verbatim with the Android twin (SharedPreferences "workoutKeepScreenOn").
     @AppStorage("workoutKeepScreenOn") private var workoutKeepScreenOn = false
 
+    /// Opt-in "Keep screen on while syncing" (default OFF, iOS only). `SyncKeepAwake` holds the screen awake
+    /// for as long as a strap history sync runs while this is on.
+    @AppStorage(ScreenIdle.strapSyncKeepAwakeKey) private var syncKeepScreenOn = false
+
     /// The strap model the user last picked (same key the scan pickers write). Gates the WHOOP 4.0-only
     /// rename control in the strap card — renaming uses the Harvard command set, which a 5/MG doesn't share.
     @AppStorage("selectedWhoopModel") private var selectedWhoopModelRaw = WhoopModel.whoop4.rawValue
@@ -344,6 +348,9 @@ struct SettingsView: View {
                 strapCard.staggeredAppear(index: 3)
                 streakCard.staggeredAppear(index: 4)
                 featuresCard.staggeredAppear(index: 5)
+                #if os(iOS)
+                syncCard.staggeredAppear(index: 6)
+                #endif
 
                 // Lower-frequency sections collapse behind a single default-closed disclosure so the
                 // screen opens at ~6 sections instead of 11. Nothing is removed; every section here
@@ -1783,6 +1790,36 @@ struct SettingsView: View {
             }
         }
     }
+
+    #if os(iOS)
+    // MARK: - Sync (iOS)
+
+    /// Behaviour while a strap history sync runs. Its own section rather than a row under Features, which holds
+    /// optional trackers. `SyncKeepAwake` reads the same key.
+    private var syncCard: some View {
+        SettingsSection(
+            icon: "arrow.triangle.2.circlepath",
+            title: "Sync",
+            blurb: "How NOOP behaves while it pulls stored history from your strap."
+        ) {
+            VStack(alignment: .leading, spacing: NoopMetrics.space2 + 2) {
+                Toggle(isOn: $syncKeepScreenOn) {
+                    Text("Keep screen on while syncing")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+                .toggleStyle(.switch)
+                .tint(StrandPalette.accent)
+                .accessibilityHint("Stops the screen locking while your strap's history syncs")
+
+                Text("Holds the screen awake while NOOP pulls stored history from your strap, so you can watch a long sync finish without the phone locking. Only applies while a sync is running and NOOP is open. The screen sleeps normally the rest of the time. It uses a bit more battery while the screen stays on.")
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+    #endif
 
     // MARK: - Backup & restore
 

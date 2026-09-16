@@ -82,6 +82,26 @@ struct BuzzStrapIntent: AppIntent {
     }
 }
 
+/// Pull the strap's stored history now: the Shortcuts twin of the "Sync now" button, run WITHOUT opening NOOP.
+/// iOS runs an in-app intent inside NOOP's own process (launching or resuming it in the background), where the
+/// strap link lives under the bluetooth-central background mode, so the offload carries on after this returns.
+/// The spoken/shown reply reports only what this path observed about the sync starting.
+struct SyncStrapIntent: AppIntent {
+    static var title: LocalizedStringResource = "Sync Strap"
+    static var description = IntentDescription("Pull your WHOOP strap's stored history into NOOP now.")
+    static var openAppWhenRun = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        switch await AppModel.startStrapSyncFromShortcut() {
+        case .started:        return .result(dialog: "Syncing your strap.")
+        case .alreadyRunning: return .result(dialog: "Your strap is already syncing.")
+        case .strapNotReady:  return .result(dialog: "Your strap isn't connected to NOOP yet, so the sync didn't start.")
+        case .notStarted:     return .result(dialog: "NOOP couldn't start the sync. Open NOOP to see the strap log.")
+        }
+    }
+}
+
 /// K9: Ask the Coach a question via Siri. Queues the question and opens the app, which sends it
 /// to the configured provider and surfaces the response. The question is spoken or typed in Siri;
 /// the app handles the actual network call using the user's saved key.
@@ -103,6 +123,13 @@ struct AskCoachIntent: AppIntent {
 /// Surfaces NOOP's intents to Siri, Spotlight, and the Shortcuts gallery without any user setup.
 struct NOOPShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
+        AppShortcut(intent: SyncStrapIntent(),
+                    phrases: [
+                        "Sync my \(.applicationName) strap",
+                        "Sync \(.applicationName)",
+                    ],
+                    shortTitle: "Sync Strap",
+                    systemImageName: "arrow.triangle.2.circlepath")
         AppShortcut(intent: MarkMomentIntent(),
                     phrases: ["Mark a moment in \(.applicationName)"],
                     shortTitle: "Mark a Moment",
