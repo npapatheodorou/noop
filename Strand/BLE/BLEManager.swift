@@ -1672,7 +1672,29 @@ public final class BLEManager: NSObject, ObservableObject {
             central.connect(p, options: nil)
             return
         }
+        #if os(iOS)
+        // Off-screen, a scan is the wrong tool: iOS throttles background scanning so hard that a field log
+        // showed eight minutes of alternating 5.0/4.0 scans finding nothing, then the strap discovered eight
+        // seconds after the app came to the foreground — twice. A targeted connect to the last strap is what
+        // iOS honours in the background: it has no timeout and wakes the app when the strap advertises, the
+        // same call the pinned path above and the standing reconnect already make. Foreground behaviour is
+        // unchanged, so a scan still finds a strap the user has switched to.
+        if UIApplication.shared.applicationState != .active,
+           let last = Self.lastConnectedPeripheralUUID,
+           let p = central.retrievePeripherals(withIdentifiers: [last]).first {
+            log("Connecting to last strap \(last) — targeted (app not on screen; a background scan would not find it)")
+            preparePeripheral(p)
+            central.connect(p, options: nil)
+            return
+        }
+        #endif
         startScan(for: model, allowFallback: true)
+    }
+
+    /// The identifier of the strap the last successful connect landed on, for the background path above.
+    static let lastConnectedPeripheralKey = "ble.lastConnectedPeripheralUUID"
+    private static var lastConnectedPeripheralUUID: UUID? {
+        UserDefaults.standard.string(forKey: lastConnectedPeripheralKey).flatMap(UUID.init(uuidString:))
     }
 
     public func disconnect() {
@@ -1716,6 +1738,10 @@ public final class BLEManager: NSObject, ObservableObject {
         // so connect()/restoration can't re-target it.
         if target == nil || preferredPeripheralUUID == target { setPreferredPeripheral(nil) }
         if target == nil || restoredPeripheral?.identifier == target { restoredPeripheral = nil }
+        // The background targeted-connect must not re-grab a strap the user has released either.
+        if target == nil || Self.lastConnectedPeripheralUUID == target {
+            UserDefaults.standard.removeObject(forKey: Self.lastConnectedPeripheralKey)
+        }
         // Drop the live BLE link so the strap is free to enter pairing mode.
         if isCurrent, let p = peripheral {
             central.cancelPeripheralConnection(p)
@@ -5654,6 +5680,9 @@ extension BLEManager: @preconcurrency CBCentralManagerDelegate {
         // registry device (it observes this and calls registry.setPeripheralId). Additive observation
         // only — BLEManager stays decoupled from the store and the connect flow below is unchanged.
         connectedPeripheralUUID = peripheral.identifier.uuidString
+        // Remembered across launches for `connectCore`'s background path: a process iOS launched off-screen
+        // (the Sync Strap shortcut, a state-restoration relaunch) reconnects by identifier, not by scan.
+        UserDefaults.standard.set(peripheral.identifier.uuidString, forKey: Self.lastConnectedPeripheralKey)
         state.connected = true
         // A connect succeeded → clear the stale-bond re-pair guide UNLESS we are in a known bond-loop
         // (#617). In that loop the strap "connects" every ~3 s before timing out again, so clearing here
