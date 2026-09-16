@@ -32,4 +32,10 @@ final class PendingManualSyncTests: XCTestCase {
         let at = now.addingTimeInterval(60)
         XCTAssertEqual(BLEManager.connectSyncTrigger(pendingManualRequestedAt: at, now: now), .connect)
     }
+
+    /// The request must outlive the process: iOS can end the background-launched app and relaunch it through
+    /// state restoration when the strap reconnects, and that relaunch is where the connect completes.
+    func testRequestIsPersistedUnderAStableKey() {
+        XCTAssertEqual(BLEManager.pendingManualSyncKey, "sync.pendingManualRequestedAt")
+    }
 }

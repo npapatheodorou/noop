@@ -4692,7 +4692,18 @@ public final class BLEManager: NSObject, ObservableObject {
     /// still launching and reconnecting in the background runs as soon as the link can serve, at the
     /// un-floored `.manual` tier the user's tap deserves, instead of being lost. Bounded by
     /// `pendingManualSyncTTL` so a stale request cannot fire an offload long after anyone asked.
-    private var pendingManualSyncRequestedAt: Date?
+    ///
+    /// Persisted, not in-memory: iOS may end the background process the shortcut launched and relaunch
+    /// NOOP later through CoreBluetooth state restoration when the strap reconnects. A request held only in
+    /// memory would not survive that, and the relaunch is exactly the path that completes the connect.
+    private var pendingManualSyncRequestedAt: Date? {
+        get { (UserDefaults.standard.object(forKey: Self.pendingManualSyncKey) as? Double).map(Date.init(timeIntervalSince1970:)) }
+        set {
+            if let newValue { UserDefaults.standard.set(newValue.timeIntervalSince1970, forKey: Self.pendingManualSyncKey) }
+            else { UserDefaults.standard.removeObject(forKey: Self.pendingManualSyncKey) }
+        }
+    }
+    static let pendingManualSyncKey = "sync.pendingManualRequestedAt"
     static let pendingManualSyncTTL: TimeInterval = 600   // 10 min
 
     /// Record that a manual sync was asked for before the link was ready.
