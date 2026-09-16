@@ -52,11 +52,14 @@ struct SyncLiveActivity: Widget {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             } compactLeading: {
+                // Same footprint as the live-HR island's heart: one symbol, no label, so the compact pill
+                // stays as narrow as that one does.
                 syncGlyph(context.state.phase)
             } compactTrailing: {
-                // The chunk count is the only live number a sync has. Nothing yet reads as a dash, not
-                // as "0", so the island never claims progress the strap has not made.
-                Text(context.state.chunks > 0 ? "\(context.state.chunks)" : "–")
+                // "…" while connecting and until the first chunk lands; then the chunk count, the only
+                // live number a sync has. Never "0", so the island never claims progress the strap has
+                // not made.
+                Text(context.state.chunks > 0 ? "\(context.state.chunks)" : "…")
                     .monospacedDigit()
             } minimal: {
                 syncGlyph(context.state.phase)
@@ -74,15 +77,15 @@ private func elapsed(since start: Date) -> some View {
     Text(timerInterval: start...Date.distantFuture, countsDown: false)
 }
 
-/// One glyph per phase, in the same colour language as the app: accent while working, the positive
-/// status colour once done, the critical one when the strap went quiet.
+/// One glyph per phase. The sync arrows in the positive (green) colour for both active phases — the
+/// connecting/syncing distinction is carried by the trailing "…" vs count, not by swapping symbols, which
+/// kept the compact pill's width steady — then a tick once done, and the critical colour when the strap
+/// went quiet.
 @ViewBuilder
 private func syncGlyph(_ phase: SyncActivityAttributes.Phase) -> some View {
     switch phase {
-    case .connecting:
-        Image(systemName: "antenna.radiowaves.left.and.right").foregroundStyle(StrandPalette.accent)
-    case .syncing:
-        Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(StrandPalette.accent)
+    case .connecting, .syncing:
+        Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(StrandPalette.statusPositive)
     case .done:
         Image(systemName: "checkmark.circle.fill").foregroundStyle(StrandPalette.statusPositive)
     case .interrupted:
