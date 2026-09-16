@@ -510,6 +510,13 @@ of history. On-device and approximate — informational only, **not** a diagnosi
   figures read closer to reality.
 - **Units** — choose your preferred measurement units (metric / imperial) across the app.
 - **Strap** — connection status, battery, and Re-scan / Disconnect controls.
+- **Sync (iOS)** — its own section with **Keep screen on while syncing**: opt-in (off by default). Holds
+  the screen awake for as long as a strap history sync runs while NOOP is open, then lets it sleep
+  normally.
+- **Siri & Shortcuts (iOS)** — a **Sync Strap** action ("Sync my NOOP strap") starts the same on-demand
+  history sync as the Sync now button, from Siri, Spotlight, the Shortcuts app, a Back Tap or an
+  automation, **without opening NOOP**. It waits briefly for the strap link, then replies whether the
+  sync started, was already running, or could not start because the strap isn't connected.
 - **Export for Shortcuts (iOS)** — a **HealthKit-free** path that hands your NOOP metrics to Apple
   Health via the Shortcuts app, so an anonymous build (with no HealthKit entitlement) can still get
   data into Health on your terms.
