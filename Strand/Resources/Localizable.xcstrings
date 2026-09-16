@@ -7,6 +7,64 @@
     "Coach settings": { "localizations": {
       "de": {"stringUnit": {"state": "translated", "value": "Coach-Einstellungen"}}, "en": {"stringUnit": {"state": "translated", "value": "Coach settings"}}, "es": {"stringUnit": {"state": "translated", "value": "Ajustes del coach"}}, "fr": {"stringUnit": {"state": "translated", "value": "Réglages du coach"}}, "it": {"stringUnit": {"state": "translated", "value": "Impostazioni del coach"}}, "pl": {"stringUnit": {"state": "translated", "value": "Ustawienia trenera"}}, "pt-PT": {"stringUnit": {"state": "translated", "value": "Definições do coach"}}, "ru": {"stringUnit": {"state": "translated", "value": "Настройки тренера"}}, "zh-Hans": {"stringUnit": {"state": "translated", "value": "教练设置"}}, "zh-Hant": {"stringUnit": {"state": "translated", "value": "教練設定"}}
     } },
+    "NOOP is connecting to your strap and will sync as soon as it's ready.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP verbindet sich mit deinem Strap und synchronisiert, sobald er bereit ist."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP se está conectando a tu pulsera y sincronizará en cuanto esté lista."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP se connecte à votre bracelet et synchronisera dès qu'il sera prêt."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP si sta collegando alla fascia e sincronizzerà non appena sarà pronta."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O NOOP está a ligar-se à sua pulseira e sincronizará assim que estiver pronta."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP подключается к браслету и синхронизирует, как только он будет готов."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP 正在连接你的手环，准备就绪后会立即同步。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP 正在連接你的手環，準備就緒後會立即同步。"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOOP łączy się z paskiem i zsynchronizuje go, gdy tylko będzie gotowy."
+          }
+        }
+      }
+    },
     "What the coach may read, how it is told to answer, and when it writes to you.": { "localizations": {
       "de": {"stringUnit": {"state": "translated", "value": "Worauf der Coach zugreifen darf, wie er antworten soll und wann er dir schreibt."}}, "en": {"stringUnit": {"state": "translated", "value": "What the coach may read, how it is told to answer, and when it writes to you."}}, "es": {"stringUnit": {"state": "translated", "value": "Qué puede leer el coach, cómo se le indica que responda y cuándo te escribe."}}, "fr": {"stringUnit": {"state": "translated", "value": "Ce que le coach peut lire, comment il doit répondre et quand il vous écrit."}}, "it": {"stringUnit": {"state": "translated", "value": "Cosa può leggere il coach, come deve rispondere e quando ti scrive."}}, "pl": {"stringUnit": {"state": "translated", "value": "Co trener może odczytywać, jak ma odpowiadać i kiedy pisze do Ciebie."}}, "pt-PT": {"stringUnit": {"state": "translated", "value": "O que o coach pode ler, como lhe é pedido que responda e quando te escreve."}}, "ru": {"stringUnit": {"state": "translated", "value": "Что тренер может читать, как ему отвечать и когда он вам пишет."}}, "zh-Hans": {"stringUnit": {"state": "translated", "value": "教练可以读取哪些数据、如何作答，以及何时向你发送消息。"}}, "zh-Hant": {"stringUnit": {"state": "translated", "value": "教練可以讀取哪些資料、如何作答，以及何時向你傳送訊息。"}}
     } },
