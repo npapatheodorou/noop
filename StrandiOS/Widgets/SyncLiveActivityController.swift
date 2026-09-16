@@ -148,8 +148,8 @@ final class SyncLiveActivityController {
             live?.append(log: "Sync activity: not started — Live Activities are off for NOOP in iOS Settings")
             return
         }
-        guard UnitPrefs.liveActivityEnabled() else {
-            live?.append(log: "Sync activity: not started — the Live Activity toggle is off in NOOP Settings")
+        guard UnitPrefs.syncLiveActivityEnabled() else {
+            live?.append(log: "Sync activity: not started — \"Strap sync in Dynamic Island\" is off in NOOP Settings")
             return
         }
         if let activity { push(activity, state); return }

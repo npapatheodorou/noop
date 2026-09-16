@@ -190,6 +190,8 @@ struct SettingsView: View {
     @AppStorage(UnitPrefs.hrvWindowKey) private var hrvWindowRaw = HrvWindow.whole.rawValue
     // Live-HR Live Activity (Lock Screen + Dynamic Island), iOS only (#336). Default on.
     @AppStorage(UnitPrefs.liveActivityKey) private var liveActivityEnabled = true
+    // Strap-sync Live Activity, iOS only. Separate from the live-HR one on purpose. Default on.
+    @AppStorage(UnitPrefs.syncLiveActivityKey) private var syncLiveActivityEnabled = true
     @AppStorage(DayCycleMode.storageKey) private var dayCycleModeRaw = DayCycleMode.sleepOnset.rawValue
     // Alternate app icon (iOS only) — false = Titanium (primary AppIcon), true = Blue Titanium
     // ("AppIcon-Navy"). Display-only preference; the live switch goes through setAlternateIconName.
@@ -1532,6 +1534,21 @@ struct SettingsView: View {
                 .toggleStyle(.switch)
                 .tint(StrandPalette.accent)
                 Text("Shows your live heart rate on the Lock Screen and in the Dynamic Island while the strap is connected. Turn it off to keep your live HR out of the Dynamic Island. (Any one already showing clears within a moment.)")
+                    .font(StrandFont.caption)
+                    .foregroundStyle(StrandPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                rowDivider
+                // MARK: Strap-sync Live Activity — its own switch, independent of the live-HR one.
+                Toggle(isOn: $syncLiveActivityEnabled) {
+                    Text("Strap sync in Dynamic Island")
+                        .font(StrandFont.subhead)
+                        .foregroundStyle(StrandPalette.textPrimary)
+                }
+                .toggleStyle(.switch)
+                .tint(StrandPalette.accent)
+                .accessibilityHint("Shows sync progress on the Lock Screen and in the Dynamic Island")
+                Text("Shows Connecting… / Syncing… with the chunk count and elapsed time while NOOP pulls history from your strap, including a sync started by the Sync Strap shortcut. Independent of the live heart rate switch above.")
                     .font(StrandFont.caption)
                     .foregroundStyle(StrandPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
