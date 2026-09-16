@@ -1,5 +1,6 @@
 #if os(iOS)
 import Foundation
+import UIKit
 
 /// What the "Sync Strap" shortcut observed when it asked for a sync. Each case names only what was seen.
 enum StrapSyncShortcutOutcome {
@@ -56,11 +57,38 @@ extension AppModel {
         guard let model = shared else { return .strapNotReady }
         guard model.live.historyReady else {
             model.ble.armPendingManualSync()
+            holdProcessAliveForPendingSync()
             return .willSyncWhenConnected
         }
         if model.live.backfilling { return .alreadyRunning }
         model.ble.syncNow()
         return model.live.backfilling ? .started : .notStarted
+    }
+
+    /// Once the intent has replied, nothing keeps the background-launched process running, and iOS may suspend
+    /// it before the strap has even answered the connect. Hold a background-time assertion until the link is
+    /// ready (the parked request then fires on its own) or `maxSeconds` pass, whichever is first. Ended on every
+    /// path, including the expiry handler, so the assertion never just runs out. Same idiom as the scene
+    /// delegate's standard-HR flush. If the handshake needs longer than this, CoreBluetooth's own wakes on each
+    /// BLE callback and state restoration take over; the parked request is persisted for exactly that case.
+    private static func holdProcessAliveForPendingSync(maxSeconds: Int = 25) {
+        let application = UIApplication.shared
+        var taskID: UIBackgroundTaskIdentifier = .invalid
+        taskID = application.beginBackgroundTask(withName: "sync-strap-shortcut-connect") {
+            application.endBackgroundTask(taskID)
+            taskID = .invalid
+        }
+        Task { @MainActor in
+            for _ in 0..<maxSeconds {
+                if taskID == .invalid { return }
+                if let model = shared, model.live.historyReady || model.live.backfilling { break }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            if taskID != .invalid {
+                application.endBackgroundTask(taskID)
+                taskID = .invalid
+            }
+        }
     }
 }
 #endif
