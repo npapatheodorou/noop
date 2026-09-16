@@ -36,20 +36,21 @@ struct SyncLiveActivity: Widget {
             .activityBackgroundTint(StrandPalette.surfaceBase)
             .activitySystemActionForegroundColor(StrandPalette.textPrimary)
         } dynamicIsland: { context in
+            // ONE line, deliberately. iOS shows the expanded layout for a few seconds whenever an activity
+            // starts and offers no way to start compact, so the only lever on that flash is how tall the
+            // expanded layout is: no bottom or centre region, so it is a short pill rather than a card.
+            // The backlog detail and title live on the Lock Screen banner instead.
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Label { Text(context.state.status) } icon: { syncGlyph(context.state.phase) }
-                        .font(.headline)
+                        .font(.subheadline)
+                        .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     if isActive(context.state.phase) {
                         elapsed(since: context.state.startedAt)
-                            .font(.system(.headline, design: .rounded).monospacedDigit())
+                            .font(.system(.subheadline, design: .rounded).monospacedDigit())
                     }
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    Text(context.state.detail ?? context.attributes.title)
-                        .font(.caption).foregroundStyle(.secondary)
                 }
             } compactLeading: {
                 // Same footprint as the live-HR island's heart: one symbol, no label, so the compact pill
