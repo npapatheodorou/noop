@@ -519,6 +519,13 @@ of history. On-device and approximate — informational only, **not** a diagnosi
   sync starts at once and the reply says so. If NOOP had to be launched for the shortcut and is still
   connecting, the request is parked and runs the moment the connect handshake settles, and the reply
   says NOOP is connecting and will sync when ready.
+- **Strap-sync Live Activity (iOS)** — while history syncs, the Lock Screen and Dynamic Island show
+  the same read-out as the Today sync control: Connecting… / Syncing… with the chunk count, the elapsed
+  time, and the strap's connect-time backlog when it reported one; then "Synced · N chunks" or "Sync
+  interrupted" for a few seconds. No progress bar, because the strap never says how much is pending. A
+  sync started from the app or the Sync Strap shortcut shows it; an automatic background sync can only
+  update one that is already showing (iOS does not let a background app start a Live Activity). Shares
+  the Live Activity toggle in Settings.
 - **Export for Shortcuts (iOS)** — a **HealthKit-free** path that hands your NOOP metrics to Apple
   Health via the Shortcuts app, so an anonymous build (with no HealthKit entitlement) can still get
   data into Health on your terms.
