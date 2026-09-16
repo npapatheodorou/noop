@@ -4687,6 +4687,37 @@ public final class BLEManager: NSObject, ObservableObject {
         requestSync(.manual)
     }
 
+    /// When the iOS "Sync Strap" shortcut asked for a sync while no strap link was ready. The connect
+    /// handshake's own on-connect kick consumes it (`connectSyncTrigger`), so a request made while NOOP was
+    /// still launching and reconnecting in the background runs as soon as the link can serve, at the
+    /// un-floored `.manual` tier the user's tap deserves, instead of being lost. Bounded by
+    /// `pendingManualSyncTTL` so a stale request cannot fire an offload long after anyone asked.
+    private var pendingManualSyncRequestedAt: Date?
+    static let pendingManualSyncTTL: TimeInterval = 600   // 10 min
+
+    /// Record that a manual sync was asked for before the link was ready.
+    public func armPendingManualSync() {
+        pendingManualSyncRequestedAt = Date()
+        log("Sync now: requested before the strap link was ready — will run once the connect handshake settles.")
+    }
+
+    /// Which trigger the on-connect kick should use. Pure so the TTL rule is unit-testable: a pending
+    /// request younger than the TTL upgrades the kick to `.manual` (always runs); anything else is the
+    /// ordinary `.connect` (90 s floor). Consumed either way.
+    nonisolated static func connectSyncTrigger(pendingManualRequestedAt: Date?, now: Date,
+                                               ttl: TimeInterval = pendingManualSyncTTL) -> BackfillTrigger {
+        guard let at = pendingManualRequestedAt, now.timeIntervalSince(at) < ttl, now >= at else { return .connect }
+        return .manual
+    }
+
+    /// The on-connect offload kick, shared by both families' handshakes. Consumes any pending shortcut request.
+    private func requestConnectSync() {
+        let trigger = Self.connectSyncTrigger(pendingManualRequestedAt: pendingManualSyncRequestedAt, now: Date())
+        pendingManualSyncRequestedAt = nil
+        if trigger == .manual { log("Sync now: running the sync requested before the link was ready.") }
+        requestSync(trigger)
+    }
+
     // MARK: Helpers
     private static let logTimeFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f
@@ -6538,7 +6569,7 @@ extension BLEManager: @preconcurrency CBPeripheralDelegate {
                 // Deferred ~1.5s so the puffin notify subscriptions settle before SEND_HISTORICAL_DATA,
                 // mirroring the WHOOP4 kick. requestSync → beginBackfill is itself gated on
                 // connectHandshakeDone, so a racing foreground/restore trigger can't fire it early.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.requestSync(.connect) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.requestConnectSync() }
                 startBackfillTimer()            // re-offload the type-47 store every backfillIntervalSeconds
                 // #34: signal settled directly (skip the cmd-notify gate `maybeSignalConnectSettled()`
                 // uses) — armStrapAlarm's 5/MG branch never sends GET_ALARM_TIME (log-only readback is
@@ -6608,7 +6639,7 @@ extension BLEManager: @preconcurrency CBPeripheralDelegate {
         // throttled by BackfillPolicy). Deferred ~1.5s so SET_CLOCK/GET_DATA_RANGE round-trip first and
         // SEND_HISTORICAL runs on a settled link, like the paced Mac prototype. beginBackfill is itself
         // gated on connectHandshakeDone so a racing foreground/restore trigger can't fire it early.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.requestSync(.connect) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.requestConnectSync() }
         startBackfillTimer()   // re-offload the type-47 store every backfillIntervalSeconds
         startKeepAlive()       // always-ping: re-arm realtime, poll battery, watchdog the link
         enableLiveNotifications(reason: "post-bond")   // includes 0x2A37 standard HR — the fallback path

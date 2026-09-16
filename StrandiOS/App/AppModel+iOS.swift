@@ -7,7 +7,10 @@ enum StrapSyncShortcutOutcome {
     case started
     /// A sync was already running when the shortcut arrived, so nothing new was requested.
     case alreadyRunning
-    /// No app model, or the strap link never reached `historyReady` within the wait.
+    /// The link was not ready within the wait (NOOP was launched in the background by the shortcut and is
+    /// still connecting). The request is parked and the connect handshake runs it once the link can serve.
+    case willSyncWhenConnected
+    /// No app model at all, so there was nowhere to park the request.
     case strapNotReady
     /// The link was ready and `syncNow` ran, but no session started. The strap log says why.
     case notStarted
@@ -40,15 +43,21 @@ extension AppModel {
     }
 
     /// Background entry point for the "Sync Strap" shortcut. When iOS launches NOOP in the background to run
-    /// the intent, the model and the strap link may still be coming up, and `BLEManager.syncNow` declines until
-    /// the connect handshake has run (`LiveState.historyReady`). Wait up to `waitSeconds` for that, then ask once.
-    /// The wait stays short because an App Intent has a limited time to return.
-    static func startStrapSyncFromShortcut(waitSeconds: Int = 15) async -> StrapSyncShortcutOutcome {
+    /// the intent, the strap link is still coming up: NOOP auto-connects to the remembered strap on launch,
+    /// but a connect + bond + handshake takes longer than an App Intent can wait, and `BLEManager.syncNow`
+    /// declines until it has run (`LiveState.historyReady`). So: wait briefly for a link that is already up
+    /// (the app-in-background case, where the reply can say the sync started), otherwise park the request
+    /// with `armPendingManualSync` so the connect handshake runs it the moment the link can serve.
+    static func startStrapSyncFromShortcut(waitSeconds: Int = 8) async -> StrapSyncShortcutOutcome {
         for _ in 0..<waitSeconds {
             if let model = shared, model.live.historyReady { break }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
-        guard let model = shared, model.live.historyReady else { return .strapNotReady }
+        guard let model = shared else { return .strapNotReady }
+        guard model.live.historyReady else {
+            model.ble.armPendingManualSync()
+            return .willSyncWhenConnected
+        }
         if model.live.backfilling { return .alreadyRunning }
         model.ble.syncNow()
         return model.live.backfilling ? .started : .notStarted

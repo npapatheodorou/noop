@@ -515,8 +515,10 @@ of history. On-device and approximate — informational only, **not** a diagnosi
   normally.
 - **Siri & Shortcuts (iOS)** — a **Sync Strap** action ("Sync my NOOP strap") starts the same on-demand
   history sync as the Sync now button, from Siri, Spotlight, the Shortcuts app, a Back Tap or an
-  automation, **without opening NOOP**. It waits briefly for the strap link, then replies whether the
-  sync started, was already running, or could not start because the strap isn't connected.
+  automation, **without opening NOOP**. If the strap link is already up (NOOP in the background) the
+  sync starts at once and the reply says so. If NOOP had to be launched for the shortcut and is still
+  connecting, the request is parked and runs the moment the connect handshake settles, and the reply
+  says NOOP is connecting and will sync when ready.
 - **Export for Shortcuts (iOS)** — a **HealthKit-free** path that hands your NOOP metrics to Apple
   Health via the Shortcuts app, so an anonymous build (with no HealthKit entitlement) can still get
   data into Health on your terms.

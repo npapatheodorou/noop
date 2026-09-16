@@ -94,10 +94,11 @@ struct SyncStrapIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         switch await AppModel.startStrapSyncFromShortcut() {
-        case .started:        return .result(dialog: "Syncing your strap.")
-        case .alreadyRunning: return .result(dialog: "Your strap is already syncing.")
-        case .strapNotReady:  return .result(dialog: "Your strap isn't connected to NOOP yet, so the sync didn't start.")
-        case .notStarted:     return .result(dialog: "NOOP couldn't start the sync. Open NOOP to see the strap log.")
+        case .started:               return .result(dialog: "Syncing your strap.")
+        case .alreadyRunning:        return .result(dialog: "Your strap is already syncing.")
+        case .willSyncWhenConnected: return .result(dialog: "NOOP is connecting to your strap and will sync as soon as it's ready.")
+        case .strapNotReady:         return .result(dialog: "Your strap isn't connected to NOOP yet, so the sync didn't start.")
+        case .notStarted:            return .result(dialog: "NOOP couldn't start the sync. Open NOOP to see the strap log.")
         }
     }
 }
