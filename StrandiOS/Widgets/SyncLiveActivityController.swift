@@ -26,6 +26,8 @@ final class SyncLiveActivityController {
 
     private var activity: Activity<SyncActivityAttributes>?
     private var cancellables: Set<AnyCancellable> = []
+    /// For the strap log: a refused `Activity.request` must say so, or "no island" has no evidence.
+    private weak var live: LiveState?
     private var startedAt = Date()
     private var lastPush: Date = .distantPast
     private var lastPushedChunks = -1
@@ -43,6 +45,7 @@ final class SyncLiveActivityController {
     private init() {}
 
     func attach(to live: LiveState) {
+        self.live = live
         live.$backfilling
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -139,7 +142,16 @@ final class SyncLiveActivityController {
     }
 
     private func request(state: SyncActivityAttributes.ContentState) {
-        guard authInfo.areActivitiesEnabled, UnitPrefs.liveActivityEnabled() else { return }
+        // Each refusal names its gate. These are rare-event lines (one per attempted start), so they stay
+        // always-on rather than behind a Test Centre domain.
+        guard authInfo.areActivitiesEnabled else {
+            live?.append(log: "Sync activity: not started — Live Activities are off for NOOP in iOS Settings")
+            return
+        }
+        guard UnitPrefs.liveActivityEnabled() else {
+            live?.append(log: "Sync activity: not started — the Live Activity toggle is off in NOOP Settings")
+            return
+        }
         if let activity { push(activity, state); return }
         guard !isStarting else { return }
         isStarting = true
@@ -150,8 +162,10 @@ final class SyncLiveActivityController {
                 pushType: nil)
             lastPush = Date()
             lastPushedChunks = state.chunks
+            live?.append(log: "Sync activity: started (\(state.phase.rawValue), app state \(UIApplication.shared.applicationState.rawValue))")
         } catch {
             activity = nil
+            live?.append(log: "Sync activity: request refused — \(error) (app state \(UIApplication.shared.applicationState.rawValue))")
         }
         isStarting = false
     }
